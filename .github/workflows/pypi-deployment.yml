@@ -1,0 +1,40 @@
+name: PyPi Deployment
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["main"]
+    paths:
+      - VERSION
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-upload:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+    - name: Setup tools
+      run: PYTHONPATH=. python -m pip install setuptools build twine
+    - name: Build
+      run: PYTHONPATH=. python -m build
+    - name: Read VERSION file
+      id: versioning
+      run: |
+          echo "::set-output name=version::$(cat VERSION)"
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: v${{steps.versioning.outputs.version}}
+        release_name: v${{steps.versioning.outputs.version}}
+        draft: false
+        prerelease: false
+    - name: Upload
+      run: PYTHONPATH=. python -m twine upload dist/* --verbose -p ${PYPI_TOKEN}

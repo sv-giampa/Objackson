@@ -5,7 +5,6 @@ At the moment it does not support circular references.
 
 # How to use
 
-
     from objackson import obj2json, json2obj
 
     class MyClass:
