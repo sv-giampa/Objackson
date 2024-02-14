@@ -18,36 +18,60 @@ import sys
 
 from objackson.json_object import JSONObject
 
-def obj2json(obj) -> str:
-    def default(obj) -> Dict:
-        obj_type: type = type(obj)
-        json_repr = dict(obj.__dict__) if hasattr(obj, "__dict__") else {}
-        if isinstance(obj, JSONObject):
-            if "__json_object_type_name__" in json_repr:
-                json_repr["__json_object_type_name__"] = obj.__dict__[
-                    "__json_object_type_name__"
-                ]
-            if "__json_object_type_module__" in json_repr:
-                json_repr["__json_object_type_module__"] = obj.__dict__[
-                    "__json_object_type_module__"
-                ]
+
+def obj2json(obj, encode_refs=True) -> str:
+    seen_objects = list()
+    
+    def default(obj: object) -> Dict:
+        try:
+            obj_id = seen_objects.index(obj)
+        except ValueError:
+            obj_id=-1
+            
+        if obj_id<0 or not encode_refs:
+            obj_type: type = type(obj)
+            json_repr = dict(obj.__dict__) if hasattr(obj, "__dict__") else {}
+            if isinstance(obj, JSONObject):
+                if "__json_object_type_name__" in json_repr:
+                    json_repr["__json_object_type_name__"] = obj.__dict__[
+                        "__json_object_type_name__"
+                    ]
+                if "__json_object_type_module__" in json_repr:
+                    json_repr["__json_object_type_module__"] = obj.__dict__[
+                        "__json_object_type_module__"
+                    ]
+            else:
+                json_repr["__json_object_type_name__"] = obj_type.__qualname__
+                json_repr["__json_object_type_module__"] = obj_type.__module__
+            
+            seen_objects.append(obj)
         else:
-            json_repr["__json_object_type_name__"] = obj_type.__qualname__
-            json_repr["__json_object_type_module__"] = obj_type.__module__
+            json_repr = {"__json_type_ref__": obj_id}
 
         return json_repr
 
-    return json.dumps(obj, default=default)
+    return json.dumps(obj, default=default, check_circular=not encode_refs)
 
 
 def json2obj(json_str: str) -> object:
+    
+    class Ref:
+        def __init__(self, x):
+            self.x = x
+    
+    seen_objects = list()
+    
     def object_hook(json_dict: Dict):
         obj_dict = dict(json_dict)
         obj = None
-        if (
+        if "__json_type_ref__" in json_dict:
+            ref: int = json_dict["__json_type_ref__"]
+            return Ref(ref)
+        elif (
             "__json_object_type_name__" in json_dict
             and "__json_object_type_module__" in json_dict
         ):
+            seen_objects.append(obj)
             obj_class_name = json_dict["__json_object_type_name__"]
             obj_class_module = json_dict["__json_object_type_module__"]
             try:
@@ -56,17 +80,17 @@ def json2obj(json_str: str) -> object:
                 del obj_dict["__json_object_type_name__"]
                 del obj_dict["__json_object_type_module__"]
             except AttributeError:
-                pass
-        #                print('WARNING: class \'' + obj_class_name + '\' was not found in the Python environment. ' +
-        #                       'Loading as a '+GenericObject.__name__+'...')
-        else:
-            pass
-        #            print('WARNING: field __json_object_type_name__ was not found in for a JSON object. '
-        #                  'Loading as a JsonObject...')
-
+                pass    # creates a JSONObject
+            
         if obj is None:
+            # print('WARNING: Loading as a JSONObject...')
             obj = JSONObject()
-
+            
+        for k in obj_dict:
+            if isinstance(obj_dict[k], Ref):
+                ref: Ref = obj_dict[k]
+                obj_dict[k] = seen_objects[ref.x]
+            
         obj.__dict__ = obj_dict
         return obj
 

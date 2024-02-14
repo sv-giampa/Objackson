@@ -1,7 +1,6 @@
 # Objackson
 This is a JSON serializer for Python that supports deep serialization of objects and full reconstruction of object structure on deserialization.
-
-At the moment it does not support circular references.
+Circular references are supported too.
 
 # How to use
 

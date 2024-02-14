@@ -54,3 +54,68 @@ class TestSerialize(TestCase):
             TestClass(3,5),
             test_obj
         )
+        
+        
+    def test_encode_refs(self):
+        class ClassEncodeRef:
+            def __init__(self):
+                self.x = None
+                self.y = None
+                
+        value = 5        
+        
+        obj1 = ClassEncodeRef()
+        obj2 = ClassEncodeRef()
+        obj3 = ClassEncodeRef()
+        obj1.x = obj2
+        obj1.y = obj3
+        obj2.x = obj3
+        obj1.x.x.x = value
+        
+        json = obj2json(obj1)
+        self.assertGreaterEqual(json.find("__json_type_ref__"), 0)
+        print(json)
+        
+        result_obj = json2obj(json)
+        
+        self.assertEqual(result_obj.x.x.x, value)
+        
+    def test_noencode_refs(self):
+        class ClassNoEncodeRef:
+            def __init__(self):
+                self.x = None
+                self.y = None
+                
+        value = 5        
+        
+        obj1 = ClassNoEncodeRef()
+        obj2 = ClassNoEncodeRef()
+        obj3 = ClassNoEncodeRef()
+        obj1.x = obj2
+        obj1.y = obj3
+        obj2.x = obj3
+        obj1.x.x.x = value
+        
+        json = obj2json(obj1, encode_refs=False)
+        self.assertLess(json.find("__json_type_ref__"), 0)
+        print(json)
+        
+        result_obj = json2obj(json)
+        
+        self.assertEqual(result_obj.x.x.x, value)
+        
+    
+    def test_circular(self):
+        class ClassCircular:
+            def __init__(self):
+                self.x = None
+        
+        ref1 = ClassCircular()
+        ref2 = ClassCircular()
+        ref1.x = ref2
+        ref2.x = ref1
+        
+        json = obj2json(ref1)
+        print(json)
+        
+        obj = json2obj(json)
