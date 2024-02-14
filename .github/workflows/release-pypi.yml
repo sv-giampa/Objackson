@@ -1,4 +1,4 @@
-name: PyPi Deployment
+name: Release and PyPI
 
 on:
   workflow_dispatch:
@@ -8,7 +8,7 @@ on:
       - VERSION
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build-and-upload:
@@ -26,7 +26,7 @@ jobs:
       id: versioning
       run: |
           echo "::set-output name=version::$(cat VERSION)"
-    - name: Create Release
+    - name: GitHub release
       id: create_release
       uses: actions/create-release@v1
       env:
@@ -36,5 +36,5 @@ jobs:
         release_name: v${{steps.versioning.outputs.version}}
         draft: false
         prerelease: false
-    - name: Upload
+    - name: PyPI Upload
       run: PYTHONPATH=. python -m twine upload dist/* --verbose -p ${PYPI_TOKEN}
