@@ -22,4 +22,6 @@ jobs:
     - name: Run unit tests
       run: PYTHONPATH=. python -m unittest -v
     - name: Run build tests
-      run: PYTHONPATH=. python -m build
+      run: 
+        python -m pip install build
+        PYTHONPATH=. python -m build

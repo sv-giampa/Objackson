@@ -37,4 +37,4 @@ jobs:
         draft: false
         prerelease: false
     - name: PyPI Upload
-      run: PYTHONPATH=. python -m twine upload dist/* --verbose -p ${PYPI_TOKEN}
+      run: PYTHONPATH=. python -m twine upload dist/* --verbose -p ${{secrets.PYPI_TOKEN}}
