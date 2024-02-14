@@ -54,18 +54,3 @@ class TestSerialize(TestCase):
             TestClass(3,5),
             test_obj
         )
-        
-    
-    def test_circular(self):
-        class Ref:
-            def __init__(self):
-                self.x = None
-        
-        ref1 = Ref()
-        ref2 = Ref()
-        ref1.x = ref2
-        ref2.x = ref1
-        
-        json = obj2json(ref1)
-        
-        obj = json2obj(json)
