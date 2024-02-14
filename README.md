@@ -2,6 +2,11 @@
 This is a JSON serializer for Python that supports deep serialization of objects and full reconstruction of object structure on deserialization.
 Circular references are supported too.
 
+# How to install
+Install latest version of Objackson from PyPI:
+
+    python3 -m pip install objackson
+
 # How to use
 
     from objackson import obj2json, json2obj
@@ -38,4 +43,4 @@ Circular references are supported too.
         main()
 
 
-For a class to be serializable, it must have a constructor that allows 0-arguments initialization.
+For a class to be serializable, it must have a constructor that allows zero-arguments initialization.
