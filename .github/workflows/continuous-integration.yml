@@ -1,0 +1,21 @@
+name: Continuous Integration
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+
+  integration-tests:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Build Docker image
+      run: docker build -t test-image .
+    - name: Run unit tests
+      run: docker run --rm -t test-image python3 -m unittest -v
+    # - name: Run build tests
+    #   run: docker run -t test-image python3 -m pip install .
